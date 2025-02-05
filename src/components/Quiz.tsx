@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, Timer, AlertCircle, Loader2 } from 'lucide-react';
-import type { Proverb, Question } from '../types/quiz';
-import ScoreCard from './ScoreCard';
+import React, { useState, useEffect } from "react";
+import { ChevronRight, Timer, AlertCircle, Loader2 } from "lucide-react";
+import type { Proverb, Question } from "../types/quiz";
+import ScoreCard from "./ScoreCard";
+import { Helmet } from "react-helmet";
 
 export default function Quiz({
   onFinish,
@@ -15,6 +16,9 @@ export default function Quiz({
   const [showResult, setShowResult] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState<string>(
+    "Atasözleri Ve Deyimler Anlamları",
+  );
 
   useEffect(() => {
     fetchQuestions();
@@ -25,12 +29,12 @@ export default function Quiz({
       setIsLoading(true);
       setError(null);
       const response = await fetch(
-        'https://pv-api-zj7q.shuttle.app/proverb/quiz'
+        "https://pv-api-zj7q.shuttle.app/proverb/quiz",
       );
       const data = await response.json();
       console.log(JSON.stringify(data.questions));
       if (!Array.isArray(data.questions)) {
-        throw new Error('Sorular yüklenirken bir hata oluştu');
+        throw new Error("Sorular yüklenirken bir hata oluştu");
       }
 
       setQuestions(
@@ -39,10 +43,11 @@ export default function Quiz({
           question: proverb.proverb,
           options: proverb.options,
           correct_answer: proverb.correct_meaning,
-        }))
+          answered: false,
+        })),
       );
     } catch (err) {
-      setError('Sorular yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      setError("Sorular yüklenirken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsLoading(false);
     }
@@ -62,22 +67,24 @@ export default function Quiz({
     setTimeout(() => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
+        setTitle(questions[currentQuestion + 1].question + " anlamı nedir?");
         setSelectedAnswer(null);
       } else {
         setShowResult(true);
         onFinish(score + (isCorrect ? 1 : 0));
       }
-    }, 1000);
+      questions[currentQuestion].answered = true;
+    }, 2000);
   };
 
   const getOptionStyle = (index: number) => {
-    if (selectedAnswer === null) return 'bg-secondary/50';
+    if (selectedAnswer === null) return "!bg-secondary/50";
     const correctAnswerIndex = questions[currentQuestion].options.indexOf(
-      questions[currentQuestion].correct_answer
+      questions[currentQuestion].correct_answer,
     );
-    if (index === correctAnswerIndex) return 'bg-green-600';
-    if (selectedAnswer === index) return 'bg-primary-600';
-    return 'bg-secondary/50';
+    if (index === correctAnswerIndex) return "!bg-green-600";
+    if (selectedAnswer === index) return "!bg-primary-600";
+    return "!bg-secondary/50";
   };
 
   if (isLoading) {
@@ -115,6 +122,11 @@ export default function Quiz({
       <div className="max-w-2xl mx-auto">
         {!showResult ? (
           <>
+            <Helmet>
+              <title> {title} </title>
+              <meta name="description" content={title} />
+              <meta name="keywords" content={title} />
+            </Helmet>
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
                 <Timer className="w-5 h-5 text-primary-600" />
@@ -129,7 +141,7 @@ export default function Quiz({
 
             <div className="bg-secondary/50 rounded-xl p-6 mb-6 border border-secondary-light/20">
               <div className="text-sm text-primary-600 mb-2">
-                Türk Atasözleri
+                Türk Atasözleri ve Deyimleri
               </div>
               <h2 className="text-xl font-semibold mb-4">
                 {questions[currentQuestion].question}
@@ -142,18 +154,18 @@ export default function Quiz({
                       selectedAnswer === null && handleAnswer(index)
                     }
                     className={`w-full text-left p-4 rounded-lg transition-all ${getOptionStyle(
-                      index
+                      index,
                     )} hover:bg-secondary/70 flex items-center justify-between ${
                       selectedAnswer !== null
-                        ? 'cursor-default'
-                        : 'cursor-pointer'
+                        ? "cursor-default"
+                        : "cursor-pointer"
                     } border border-secondary-light/20`}
                     disabled={selectedAnswer !== null}
                   >
                     <span>{option}</span>
                     <ChevronRight
                       className={`w-5 h-5 ${
-                        selectedAnswer === index ? 'opacity-100' : 'opacity-0'
+                        selectedAnswer === index ? "opacity-100" : "opacity-0"
                       }`}
                     />
                   </button>
